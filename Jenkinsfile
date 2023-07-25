@@ -4,7 +4,7 @@ pipeline{
         stage ("test"){
             steps{
                 script{
-                    sh "echo sivalakshmi"
+                    sh "echo Amartya"
                 }
             }
         }
