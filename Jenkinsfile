@@ -3,8 +3,7 @@ pipeline{
     stages{
         stage('Cloning our Git') { 
             steps { 
-                git 'https://github.com/amartyaa/coder-images.git' 
-            }
+                sh "git clone https://github.com/amartyaa/coder-images.git"
         }
         stage ("test"){
             agent{ docker { image 'docker' } }
