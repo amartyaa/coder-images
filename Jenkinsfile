@@ -1,27 +1,71 @@
-pipeline{
-    agent {
-        kubernetes {
-            defaultContainer 'jnlp'
-            yamlFile 'agentpod.yaml'
+pipeline {
+  agent {
+    kubernetes {
+      inheritFrom 'kubernetes'
+      defaultContainer 'jnlp'
+      yaml """
+apiVersion: v1
+kind: Pod
+metadata:
+labels:
+  component: ci
+spec:
+  # Use service account that can deploy to all namespaces
+  serviceAccountName: cd-jenkins
+  containers:
+  - name: maven
+    image: maven:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+      - mountPath: "/root/.m2"
+        name: m2
+  - name: docker
+    image: docker:latest
+    command:
+    - cat
+    tty: true
+    volumeMounts:
+    - mountPath: /var/run/docker.sock
+      name: docker-sock
+  volumes:
+    - name: docker-sock
+      hostPath:
+        path: /var/run/docker.sock
+    - name: m2
+      persistentVolumeClaim:
+        claimName: m2
+"""
+}
+   }
+  stages {
+    stage('Build') {
+      steps {
+        container('maven') {
+          sh """
+            mvn package -DskipTests
+            """
         }
+      }
     }
-    stages{
-        stage('clean up'){
-            steps{
-                deleteDir()
-            }
+    stage('Test') {
+      steps {
+        container('maven') {
+          sh """
+             mvn test
+          """
         }
-        stage('Cloning our Git') { 
-            steps { 
-                sh "git clone https://github.com/amartyaa/coder-images.git"
-            }
-        }
-        stage ("test"){
-            steps {
-                container('docker') {
-                    sh "docker build -t dockerimage images/base/Dockerfile.ubuntu"
-                }
-            }
-        }
+      }
     }
+    stage('Push') {
+      steps {
+        container('docker') {
+          sh """
+             docker build -t spring-petclinic-demo:$BUILD_NUMBER .
+          """
+        }
+      }
+    }
+  }
 }
