@@ -1,5 +1,10 @@
 pipeline{
-    agent any
+    agent {
+        kubernetes {
+            defaultContainer 'jnlp'
+            yamlFile 'agentpod.yaml'
+        }
+    }
     stages{
         stage('clean up'){
             steps{
@@ -12,10 +17,9 @@ pipeline{
             }
         }
         stage ("test"){
-            agent{ docker { image 'docker' } }
-            steps{
-                script{
-                    sh "echo Amartya"
+            steps {
+                container('docker') {
+                    sh "docker build -t dockerimage images/base/Dockerfile.ubuntu"
                 }
             }
         }
