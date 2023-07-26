@@ -3,7 +3,7 @@ pipeline {
   stages{
     stage('base image build'){
       steps{
-        sh "docker build ."
+        sh "docker build -t base $wokrspace/images/base/Dockerfile.ubuntu"
       }
     }
   }
