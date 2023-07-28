@@ -1,6 +1,6 @@
 pipeline {
   agent  {
-        label 'dind-agent'
+      label 'dind-agent'
     }
   stages{
     stage('base image build'){
