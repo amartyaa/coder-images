@@ -5,7 +5,6 @@ pipeline {
     }
   }
   stages {
-
     stage('Kaniko Build & Push Image') {
       steps {
         container('kaniko') {
@@ -19,3 +18,5 @@ pipeline {
         }
       }
     }
+  }
+}
