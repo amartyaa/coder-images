@@ -1,16 +1,23 @@
 pipeline {
+
+  options {
+    ansiColor('xterm')
+  }
+
   agent {
     kubernetes {
       yamlFile 'build.yaml'
     }
   }
+
   stages {
+
     stage('Kaniko Build & Push Image') {
       steps {
         container('kaniko') {
           script {
             sh '''
-            /kaniko/executor --dockerfile $workspace/images/base/Dockerfile.ubuntu \
+            /kaniko/executor --dockerfile `pwd`/Dockerfile \
                              --context `pwd` \
                              --destination=justmeandopensource/myweb:${BUILD_NUMBER}
             '''
@@ -18,5 +25,17 @@ pipeline {
         }
       }
     }
+
+    stage('Deploy App to Kubernetes') {     
+      steps {
+        container('kubectl') {
+          withCredentials([file(credentialsId: 'mykubeconfig', variable: 'KUBECONFIG')]) {
+            sh 'sed -i "s/<TAG>/${BUILD_NUMBER}/" myweb.yaml'
+            sh 'kubectl apply -f myweb.yaml'
+          }
+        }
+      }
+    }
+  
   }
 }
