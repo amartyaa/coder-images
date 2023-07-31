@@ -26,7 +26,7 @@ spec:
       steps {
         container('kaniko') {
           script {
-            sh '''`pwd` 
+            sh '''
             executor --dockerfile images/base/Dockerfile.ubuntu --build-arg USERNAME=siva --build-arg PASSWORD=Siva@VF12 --cache=true"
                              
             '''
