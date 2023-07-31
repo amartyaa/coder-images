@@ -3,13 +3,13 @@ pipeline {
     kubernetes {
       label 'example-kaniko-volumes'
       yaml """
+apiVersion: v1
 kind: Pod
 metadata:
   name: kaniko
 spec:
   containers:
   - name: kaniko
-    workingDir: /home/jenkins
     image: gcr.io/kaniko-project/executor:debug
     imagePullPolicy: Always
     command:
