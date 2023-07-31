@@ -7,8 +7,8 @@ kind: Pod
 metadata:
   name: pod
 spec:
-  containers: kaniko
-  - name: container-name
+  containers: 
+  - name: kaniko
     image: a6f034afb9b8246a4b069286109179cd-1585340972.eu-central-1.elb.amazonaws.com/docker-dev-local/kaniko-executor:debug
     command:
     - cat
