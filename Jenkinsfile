@@ -1,36 +1,48 @@
 pipeline {
   agent {
     kubernetes {
-      yaml '''
-apiVersion: v1
+      label 'example-kaniko-volumes'
+      yaml """
 kind: Pod
 metadata:
-  name: pod
+  name: kaniko
 spec:
-  containers: 
+  containers:
+  - name: jnlp
+    workingDir: /home/jenkins
   - name: kaniko
-    image: a6f034afb9b8246a4b069286109179cd-1585340972.eu-central-1.elb.amazonaws.com/docker-dev-virtual/kaniko-executor:debug
-    env:
-    - name: USERNAME
-      value: siva
-    - name: PASSWORD
-      value: "Siva@VF12"
+    workingDir: /home/jenkins
+    image: gcr.io/kaniko-project/executor:debug
+    imagePullPolicy: Always
     command:
-    - cat
-    tty: true 
-      '''
+    - /busybox/cat
+    tty: true
+    volumeMounts:
+      - name: jenkins-docker-cfg
+        mountPath: /kaniko/.docker
+  volumes:
+  - name: jenkins-docker-cfg
+    projected:
+      sources:
+      - secret:
+          name: docker-credentials (1)
+          items:
+            - key: .dockerconfigjson
+              path: config.json
+"""
     }
   }
   stages {
-    stage('Kaniko Build & Push Image') {
+    stage('Build with Kaniko') {
+      environment {
+        PATH = "/busybox:/kaniko:$PATH"
+      }
       steps {
-        container('kaniko') {
-          script {
-            sh '''
-            executor --dockerfile images/base/Dockerfile.ubuntu --build-arg USERNAME=siva --build-arg PASSWORD=Siva@VF12 --cache=true"
-                             
-            '''
-          }
+        container(name: 'kaniko', shell: '/busybox/sh') {
+
+          sh '''#!/busybox/sh
+            /kaniko/executor --dockerfile `pwd`/images/base/Dockerfile.ubuntu  --context `pwd` --skip-tls-verify --insecure --insecure-pull --single-snapshot --destination=a6f034afb9b8246a4b069286109179cd-1585340972.eu-central-1.elb.amazonaws.com/docker-dev-local/test:1  --cleanup=true --build-arg USERNAME=siva --build-arg PASSWORD=Siva@VF12 --cache=true
+          ''' 
         }
       }
     }
