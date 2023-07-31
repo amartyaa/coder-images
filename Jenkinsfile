@@ -8,8 +8,6 @@ metadata:
   name: kaniko
 spec:
   containers:
-  - name: jnlp
-    workingDir: /home/jenkins
   - name: kaniko
     workingDir: /home/jenkins
     image: gcr.io/kaniko-project/executor:debug
@@ -17,18 +15,6 @@ spec:
     command:
     - /busybox/cat
     tty: true
-    volumeMounts:
-      - name: jenkins-docker-cfg
-        mountPath: /kaniko/.docker
-  volumes:
-  - name: jenkins-docker-cfg
-    projected:
-      sources:
-      - secret:
-          name: docker-credentials (1)
-          items:
-            - key: .dockerconfigjson
-              path: config.json
 """
     }
   }
