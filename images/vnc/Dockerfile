@@ -1,15 +1,13 @@
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
+USER root
 SHELL ["/bin/bash", "-c"]
 ENV DEBIAN_FRONTEND noninteractive
-
+ARG HOME=/home/vf-user
 # Install the Docker apt repository
 RUN apt-get update && \
     apt-get upgrade --yes && \
-    apt-get install --yes ca-certificates && \
-    rm -rf /var/lib/apt/lists/*
-COPY docker-archive-keyring.gpg /usr/share/keyrings/docker-archive-keyring.gpg
-COPY docker.list /etc/apt/sources.list.d/docker.list
+    apt-get install --yes ca-certificates  
 
 # Install baseline packages
 RUN apt-get update && \
@@ -17,12 +15,7 @@ RUN apt-get update && \
     bash \
     build-essential \
     ca-certificates \
-    containerd.io \
     curl \
-    docker-ce \
-    docker-ce-cli \
-    docker-buildx-plugin \
-    docker-compose-plugin \
     htop \
     locales \
     man \
@@ -38,14 +31,8 @@ RUN apt-get update && \
     rsync && \
     # Install latest Git using their official PPA
     add-apt-repository ppa:git-core/ppa && \
-    apt-get install --yes git \
-    && rm -rf /var/lib/apt/lists/*
+    apt-get install --yes git 
 
-# Enables Docker starting with systemd
-RUN systemctl enable docker
-
-# Create a symlink for standalone docker-compose usage
-RUN ln -s /usr/libexec/docker/cli-plugins/docker-compose /usr/bin/docker-compose
 
 # Make typing unicode characters in the terminal work.
 ENV LANG en_US.UTF-8
@@ -54,16 +41,11 @@ ENV LANG en_US.UTF-8
 RUN useradd vf-user \
     --create-home \
     --shell=/bin/bash \
-    --groups=docker \
-    --uid=1000 \
+    --uid=1001 \
     --user-group && \
     echo "vf-user ALL=(ALL) NOPASSWD:ALL" >>/etc/sudoers.d/nopasswd
-
-USER vf-user
-RUN pip install numpy
-
-USER 0
-
+RUN chown -R vf-user $HOME
+RUN echo -e -n "newpasswd\nnewpasswd" | passwd vf-user
 ARG DEBCONF_NONINTERACTIVE_SEEN=true
 ARG DEBIAN_FRONTEND="noninteractive"
 ARG TURBOVNC_VERSION=2.2.5
@@ -111,7 +93,7 @@ RUN apt-get remove -y \
 
 RUN locale-gen en_US.UTF-8
 
-ARG HOME=/home/vf-user
+
 ARG VNC_ROOT_DIR=/opt/vnc
 
 RUN cd /tmp \
@@ -163,6 +145,7 @@ COPY ["./vf-user", "/vf-user"]
 RUN chmod +x /vf-user/configure
 
 USER vf-user
+RUN pip install numpy
 RUN ls ${VNC_SETUP_SCRIPTS}
 RUN $VNC_SETUP_SCRIPTS/no_vnc.sh
 
